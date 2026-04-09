@@ -4,7 +4,9 @@ import Admin from "../components/Admin";
 import Employee from "../components/Employee";
 import EmployeeDetails from "../Employee Details/EmployeeDetails";
 import EmployeeDashboad from "../components/EmployeeDashboad";
-import ProtectedRoute from "../components/ProtectedRoute";
+
+import { AdminProtectedRoute } from "../components/AdminProtectedRoute";
+import { EmployeeProtectedRoute } from "../components/EmployeeProtectedRoute";
 
 const AppRouter = () => {
   return (
@@ -14,17 +16,17 @@ const AppRouter = () => {
       <Route
         path="/employeeDetails"
         element={
-          <ProtectedRoute>
+          <AdminProtectedRoute>
             <EmployeeDetails />
-          </ProtectedRoute>
+          </AdminProtectedRoute>
         }
       ></Route>
       <Route
         path="/employee-dashboard"
         element={
-          <ProtectedRoute>
+          <EmployeeProtectedRoute>
             <EmployeeDashboad />
-          </ProtectedRoute>
+          </EmployeeProtectedRoute>
         }
       ></Route>
     </Routes>

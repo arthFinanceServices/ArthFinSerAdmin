@@ -1,50 +1,40 @@
-const adminModels = require("../models/admin.models");
+// src/controllers/admin.controllers.js
 const jwt = require("jsonwebtoken");
+const adminModels = require("../models/admin.models");
 
 async function adminLogin(req, res) {
   try {
     const { email, password } = req.body;
 
-    console.log("email : ", email);
-    console.log("passwprd", password);
-
     if (!email || !password) {
-      return res.status(400).json({
-        message: "All fields are required",
-      });
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-    const isAdminExist = await adminModels.findOne({ email });
-
-    if (!isAdminExist) {
-      return res.status(401).json({
-        message: "Unauthorized Access",
-      });
+    const admin = await adminModels.findOne({ email });
+    if (!admin || admin.password !== password) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (isAdminExist.password !== password) {
-      return res.status(401).json({
-        message: "Password is wrong",
-      });
-    }
     const token = jwt.sign(
-      { id: isAdminExist._id, user: "admin" },
+      { id: admin._id, role: "admin" },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "1h" },
+      { expiresIn: "1d" }
     );
 
-    //saving coookie
-    res.cookie("token", token);
+    const isProduction = process.env.NODE_ENV === "production";
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: isProduction,                  // ✅ false on localhost, true on Render
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+    });
 
     return res.status(200).json({
-      message: "Successfully logged in",
+      message: "Admin logged in successfully",
     });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      message: "Login Error",
-      error: error.message,
-    });
+  } catch (err) {
+    return res.status(500).json({ message: "Login Error" });
   }
 }
 

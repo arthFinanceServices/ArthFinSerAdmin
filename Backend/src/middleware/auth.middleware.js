@@ -1,53 +1,26 @@
+// src/middleware/auth.middleware.js
 const jwt = require("jsonwebtoken");
-const adminModels = require("../models/admin.models");
 
-async function authMiddleWare(req, res) {
+const authMiddleWare = (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const token = req.cookies.token;
 
-    if (!email || !password) {
-      return res.status(400).json({
-        message: "All fields are required",
-      });
-    }
-
-    const admin = await adminModels.findOne({ email });
-
-    if (!admin) {
+    if (!token) {
       return res.status(401).json({
-        message: "Unauthorized Access",
+        message: "Access denied",
       });
     }
 
-    if (admin.password !== password) {
-      return res.status(401).json({
-        message: "Password is wrong",
-      });
-    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    req.user = decoded;   // attach decoded user
 
-    // ✅ CREATE JWT
-    const token = jwt.sign(
-      { id: admin._id, role: "admin" },
-      process.env.JWT_SECRET_KEY,
-      { expiresIn: "1d" }
-    );
-
-    // ✅ SET COOKIE (IMPORTANT)
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,     // required for HTTPS (Render / Vercel)
-      sameSite: "none", // required for cross-origin cookies
-    });
-
-    return res.status(200).json({
-      message: "Admin logged in successfully",
-    });
-
+    next(); // ✅ MUST call next
   } catch (error) {
-    return res.status(500).json({
-      message: "Login Error",
+    return res.status(401).json({
+      message: "Invalid or expired token",
     });
   }
-}
+};
 
 module.exports = { authMiddleWare };
+``

@@ -1,47 +1,58 @@
 const employeedetailsModels = require("../models/employeedetails.models");
 const jwt = require("jsonwebtoken");
+
 async function employeeLogin(req, res) {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
-        message: "All fileds are required",
+        message: "All fields are required",
       });
     }
 
-    const isEmployeeExist = await employeedetailsModels.findOne({ email });
+    const employee = await employeedetailsModels.findOne({ email });
 
-    if (!isEmployeeExist) {
+    if (!employee) {
       return res.status(401).json({
-        message: "Unauthorized Access",
+        message: "Unauthorized access",
       });
     }
 
-    if (!isEmployeeExist.isActive) {
+    if (!employee.isActive) {
       return res.status(401).json({
-        message: "your account is disabled",
+        message: "Your account is disabled",
       });
     }
 
-    if (isEmployeeExist.password !== password) {
+    if (employee.password !== password) {
       return res.status(401).json({
         message: "Password is wrong",
       });
     }
 
+    // ✅ IMPORTANT FIX: use `role`, not `user`
     const token = jwt.sign(
-      { id: isEmployeeExist._id, user: "employee" },
+      { id: employee._id, role: "employee" },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "1h" },
+      { expiresIn: "1h" }
     );
 
-    //saving coookie
-    res.cookie("token", token);
+    // ✅ Proper cookie config for local + cloud
+    const isProduction = process.env.NODE_ENV === "production";
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: isProduction,                 // true on Render, false locally
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+    });
+
     return res.status(200).json({
-      message: "user logged in successfully",
+      message: "Employee logged in successfully",
     });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({
       message: "Internal server error",
     });

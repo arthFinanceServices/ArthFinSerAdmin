@@ -5,10 +5,13 @@ const employeeDetailsSchema = mongoose.Schema(
     fullName: {
       type: String,
       required: true,
+      trim:true
     },
     email: {
       type: String,
       required: true,
+      lowercase: true,   
+      trim: true,
     },
     isActive: {
       type: Boolean,
@@ -18,6 +21,7 @@ const employeeDetailsSchema = mongoose.Schema(
     password: {
       type: String,
       required: true,
+      trim:true
     },
   },
   { timestamps: true },

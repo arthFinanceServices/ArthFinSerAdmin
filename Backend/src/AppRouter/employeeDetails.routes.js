@@ -6,12 +6,15 @@ const {
   getEmployeeDetails,
   updateEmployee,
   addEmployee,
+  deleteEmployee,
 } = require("../controllers/employee.details.controller");
 
 const { adminLogin } = require("../controllers/admin.controllers");
 const { employeeLogin } = require("../controllers/employee.controllers");
 const { authMiddleWare } = require("../middleware/auth.middleware");
-
+// ✅ Delete employee
+router.delete("/deleteEmployee/:id", authMiddleWare, deleteEmployee);
+  
 // 🔓 Public routes
 router.post("/login/admin", adminLogin);
 router.post("/login/employee", employeeLogin);

@@ -125,8 +125,39 @@ async function addEmployee(req, res) {
   }
 }
 
+
+/**
+ * ✅ Delete employee (Admin only)
+ */
+async function deleteEmployee(req, res) {
+  try {
+    const { id } = req.params;
+
+    const deletedEmployee = await employeedetailsModels.findByIdAndDelete(id);
+
+    if (!deletedEmployee) {
+      return res.status(404).json({
+        message: "Employee not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Employee deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Failed to delete employee",
+    });
+  }
+}
+
 module.exports = {
   getEmployeeDetails,
   updateEmployee,
   addEmployee,
+  deleteEmployee
 };
+
+
+

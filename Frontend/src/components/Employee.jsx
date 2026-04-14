@@ -1,32 +1,52 @@
 import React from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import axiosInstance from "../Api/AxiosInstance";
 import { useNavigate } from "react-router-dom";
 
 const Employee = () => {
   const { register, handleSubmit, reset } = useForm();
+  const [message, setMessage] = useState("Access your dashboard securely");
+  const [messageType, setMessageType] = useState("default"); 
+  // default | success | error
+
   const navigate = useNavigate();
   async function handleEmployeeLogin(data) {
-    try {
-      const res = await axiosInstance.post("/login/employee", data);
-      if(res.status = 200){
+  try {
+    const res = await axiosInstance.post("/login/employee", data);
+
+    if (res.status === 200) {
+      setMessage(res.data.message || "Login successful");
+      setMessageType("success");
+
+      setTimeout(() => {
         navigate("/employee-dashboard");
-      }
-      console.log(res);
-    } catch (error) {
-      console.log(error.message);
+      }, 800); // small delay so user sees message
     }
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message || "Login failed"
+    );
+    setMessageType("error");
   }
+}
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <div className="bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-2xl shadow-2xl w-full max-w-md">
         <h2 className="text-3xl font-semibold text-center text-white mb-6 tracking-wide">
           Employee Login
         </h2>
-
-        <p className="text-center text-gray-300 mb-6 text-sm">
-          Access your dashboard securely
-        </p>
+      <p className={`text-center mb-6 text-sm font-medium transition-colors
+          ${
+            messageType === "success"
+            ? "text-green-400"
+            : messageType === "error"
+            ? "text-red-400"
+            : "text-gray-300"
+          }
+    `}>
+      {message}
+      </p>
 
         <form
           onSubmit={handleSubmit(handleEmployeeLogin)}

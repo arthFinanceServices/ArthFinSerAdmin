@@ -65,6 +65,7 @@ app.use(
   })
 );
 
+app.set("trust proxy", 1);
 // ✅ API routes
 app.use("/api", employeeDetailsRoutes);
 app.use("/api", dealer);

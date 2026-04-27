@@ -23,7 +23,254 @@ const EmployeeDetails = () => {
     password: "",
     isActive: true,
   });
-  
+  //-----------------------------------------------------------------
+/* ================= EMPLOYEE LINKS STATE ================= */
+
+const [employeeEmail, setEmployeeEmail] = useState("");
+const [searchedEmail, setSearchedEmail] = useState("");
+const [employeeLinks, setEmployeeLinks] = useState([]);
+const [isLinkSearchDone, setIsLinkSearchDone] = useState(false);
+
+const [isAddingLink, setIsAddingLink] = useState(false);
+const [editingLinkId, setEditingLinkId] = useState(null);
+
+const [newLinkRow, setNewLinkRow] = useState({
+  employeeEmail: "",
+  linkName: "",
+  url: "",
+  isActive: true,
+});
+
+const [editLinkRow, setEditLinkRow] = useState({
+  linkName: "",
+  url: "",
+});
+
+/* ================= SEARCH ================= */
+
+const handleSearchEmployeeLinks = async () => {
+  if (!employeeEmail) return alert("Enter employee email");
+
+  setSearchedEmail(employeeEmail);
+  setIsLinkSearchDone(true);
+
+  setIsAddingLink(false);
+  setEditingLinkId(null);
+  setEditLinkRow({ linkName: "", url: "" });
+
+  try {
+    const res = await axiosInstance.get(
+      `/employee-links?email=${employeeEmail}`
+    );
+    setEmployeeLinks(res.data.data || []);
+  } catch (err) {
+    console.error(err);
+    setEmployeeLinks([]);
+  }
+};
+
+/* ================= ADD LINK ================= */
+
+const handleAddLinkClick = () => {
+  if (!searchedEmail) return;
+
+  setIsAddingLink(true);
+  setEditingLinkId(null);
+
+  setNewLinkRow({
+    employeeEmail: searchedEmail,
+    linkName: "",
+    url: "",
+    isActive: true,
+  });
+};
+
+const handleSaveNewLink = async () => {
+  if (!newLinkRow.linkName || !newLinkRow.url) {
+    return alert("Link Name and URL are required");
+  }
+
+  try {
+    const res = await axiosInstance.post("/employee-links", {
+      employeeEmail: newLinkRow.employeeEmail,
+      linkName: newLinkRow.linkName,   // ✅ correct key
+      url: newLinkRow.url,
+      isActive: newLinkRow.isActive,
+    });
+
+    setEmployeeLinks((prev) => [...prev, res.data.data]);
+    setIsAddingLink(false);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+/* ================= EDIT LINK ================= */
+
+const handleEditLink = (id) => {
+  const link = employeeLinks.find((l) => l._id === id);
+  if (!link) return;
+
+  setEditingLinkId(id);
+  setIsAddingLink(false);
+
+  setEditLinkRow({
+    linkName: link.linkName,
+    url: link.url,
+  });
+};
+
+const handleSaveEditLink = async (id) => {
+  try {
+    const res = await axiosInstance.patch(`/employee-links/${id}`, {
+      linkName: editLinkRow.linkName,
+      url: editLinkRow.url,
+    });
+
+    setEmployeeLinks((prev) =>
+      prev.map((link) =>
+        link._id === id ? res.data.data : link
+      )
+    );
+
+    setEditingLinkId(null);
+    setEditLinkRow({ linkName: "", url: "" });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+/* ================= TOGGLE ACTIVE ================= */
+
+const toggleLinkStatus = async (id, currentStatus) => {
+  try {
+    const res = await axiosInstance.patch(`/employee-links/${id}`, {
+      isActive: !currentStatus,
+    });
+
+    setEmployeeLinks((prev) =>
+      prev.map((link) =>
+        link._id === id ? res.data.data : link
+      )
+    );
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+/* ================= DELETE LINK ================= */
+
+const deleteLink = async (id) => {
+  if (!window.confirm("Delete this link?")) return;
+
+  try {
+    await axiosInstance.delete(`/employee-links/${id}`);
+    setEmployeeLinks((prev) => prev.filter((link) => link._id !== id));
+  } catch (err) {
+    console.error(err);
+  }
+};
+//--------------------------------------------------------------------------
+/* ================= GLOBAL LINKS STATE ================= */
+
+const [globalLinks, setGlobalLinks] = useState([]);
+const [isAddingGlobalLink, setIsAddingGlobalLink] = useState(false);
+const [editingGlobalLinkId, setEditingGlobalLinkId] = useState(null);
+
+const [newGlobalLinkRow, setNewGlobalLinkRow] = useState({
+  linkName: "",
+  url: "",
+  isActive: true,
+});
+
+const [editGlobalLinkRow, setEditGlobalLinkRow] = useState({
+  linkName: "",
+  url: "",
+});
+/* ================= FETCH GLOBAL LINKS ================= */
+
+const fetchGlobalLinks = async () => {
+  try {
+    const res = await axiosInstance.get("/global-links");
+    setGlobalLinks(res.data.data || []);
+  } catch (err) {
+    console.error(err);
+    setGlobalLinks([]);
+  }
+};
+
+useEffect(() => {
+  fetchGlobalLinks();
+}, []);
+
+/* ================= ADD GLOBAL LINK ================= */
+
+const handleAddGlobalLinkClick = () => {
+  setIsAddingGlobalLink(true);
+  setEditingGlobalLinkId(null);
+  setNewGlobalLinkRow({ linkName: "", url: "", isActive: true });
+};
+
+const handleSaveNewGlobalLink = async () => {
+  if (!newGlobalLinkRow.linkName || !newGlobalLinkRow.url) {
+    return alert("Link Name and URL are required");
+  }
+
+  const res = await axiosInstance.post("/global-links", newGlobalLinkRow);
+  setGlobalLinks((prev) => [...prev, res.data.data]);
+  setIsAddingGlobalLink(false);
+};
+
+/* ================= EDIT GLOBAL LINK ================= */
+
+const handleEditGlobalLink = (id) => {
+  const link = globalLinks.find((l) => l._id === id);
+  if (!link) return;
+
+  setEditingGlobalLinkId(id);
+  setIsAddingGlobalLink(false);
+
+  setEditGlobalLinkRow({
+    linkName: link.linkName,
+    url: link.url,
+  });
+};
+
+const handleSaveEditGlobalLink = async (id) => {
+  const res = await axiosInstance.patch(`/global-links/${id}`, {
+    linkName: editGlobalLinkRow.linkName,
+    url: editGlobalLinkRow.url,
+  });
+
+  setGlobalLinks((prev) =>
+    prev.map((l) => (l._id === id ? res.data.data : l))
+  );
+
+  setEditingGlobalLinkId(null);
+  setEditGlobalLinkRow({ linkName: "", url: "" });
+};
+
+/* ================= TOGGLE GLOBAL LINK ================= */
+
+const toggleGlobalLinkStatus = async (id, currentStatus) => {
+  const res = await axiosInstance.patch(`/global-links/${id}`, {
+    isActive: !currentStatus,
+  });
+
+  setGlobalLinks((prev) =>
+    prev.map((l) => (l._id === id ? res.data.data : l))
+  );
+};
+
+/* ================= DELETE GLOBAL LINK ================= */
+
+const deleteGlobalLink = async (id) => {
+  if (!window.confirm("Delete this global link?")) return;
+
+  await axiosInstance.delete(`/global-links/${id}`);
+  setGlobalLinks((prev) => prev.filter((l) => l._id !== id));
+};
+//-----------------------------------------------------------------
 const handleDeleteEmployee = async (id) => {
   const confirmDelete = window.confirm(
     "Are you sure you want to delete this employee?"
@@ -494,6 +741,370 @@ const handleDeleteDealer = async (id) => {
                 className="bg-green-500 text-white px-3 py-1 rounded"
               >
                 Add
+              </button>
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
+{/* ================= EMPLOYEE LINKS ================= */}
+<div className="max-w-5xl mx-auto mt-16">
+  <h2 className="text-xl font-semibold mb-4">Employee Links</h2>
+
+  {/* Search */}
+  <div className="flex gap-3 mb-6">
+    <input
+      type="email"
+      placeholder="Enter employee email"
+      value={employeeEmail}
+      onChange={(e) => setEmployeeEmail(e.target.value)}
+      className="flex-1 border px-4 py-2 rounded-lg"
+    />
+    <button
+      onClick={handleSearchEmployeeLinks}
+      className="bg-indigo-500 text-white px-6 py-2 rounded-lg"
+    >
+      Submit
+    </button>
+  </div>
+
+  {isLinkSearchDone && (
+    <p className="text-gray-600 mb-4">
+      Results for <span className="font-medium">{searchedEmail}</span>
+    </p>
+  )}
+
+  {isLinkSearchDone && (
+    <div className="bg-white shadow rounded-lg">
+      <div className="flex justify-between items-center p-4 border-b">
+        <p className="font-medium">Links</p>
+        <button
+          onClick={handleAddLinkClick}
+          className="bg-green-500 text-white px-4 py-2 rounded"
+        >
+          + Add Link
+        </button>
+      </div>
+
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b bg-gray-50">
+            <th className="p-3 text-left">Email</th>
+            <th className="p-3 text-left">Link Name</th>
+            <th className="p-3 text-left">URL</th>
+            <th className="p-3 text-center">Active</th>
+            <th className="p-3 text-center">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {employeeLinks.map((link) => (
+            <tr key={link._id} className="border-b">
+              {/* Email (immutable) */}
+              <td className="p-3">{searchedEmail}</td>
+
+              {/* Link Name */}
+              <td className="p-3">
+                {editingLinkId === link._id ? (
+                  <input
+                    defaultValue={link.linkName}
+                    onChange={(e) =>
+                      setEditLinkRow((prev) => ({
+                        ...prev,
+                        linkName: e.target.value,
+                      }))
+                    }
+                    className="border px-2 py-1 rounded w-full"
+                  />
+                ) : (
+                  link.linkName
+                )}
+              </td>
+
+              {/* URL */}
+              <td className="p-3">
+                {editingLinkId === link._id ? (
+                  <input
+                    defaultValue={link.url}
+                    onChange={(e) =>
+                      setEditLinkRow((prev) => ({
+                        ...prev,
+                        url: e.target.value,
+                      }))
+                    }
+                    className="border px-2 py-1 rounded w-full"
+                  />
+                ) : (
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    {link.url}
+                  </a>
+                )}
+              </td>
+
+              {/* Active Toggle */}
+              <td className="p-3 text-center">
+                <button
+                  onClick={() =>
+                    toggleLinkStatus(link._id, link.isActive)
+                  }
+                >
+                  {link.isActive ? (
+                    <FaToggleOn className="text-3xl text-indigo-500" />
+                  ) : (
+                    <FaToggleOff className="text-3xl text-gray-400" />
+                  )}
+                </button>
+              </td>
+
+              {/* Action */}
+              <td className="p-3 text-center">
+                {editingLinkId === link._id ? (
+                  <button
+                    onClick={() => handleSaveEditLink(link._id)}
+                    className="bg-indigo-500 text-white px-3 py-1 rounded"
+                  >
+                    Save
+                  </button>
+                ) : (
+                  <div className="flex justify-center gap-3">
+                    <button onClick={() => handleEditLink(link._id)}>
+                      <CiEdit className="text-xl text-indigo-600" />
+                    </button>
+                    <button onClick={() => deleteLink(link._id)}>
+                      <MdDelete className="text-xl text-red-500" />
+                    </button>
+                  </div>
+                )}
+              </td>
+            </tr>
+          ))}
+
+          {/* ✅ ADD LINK ROW */}
+          {isAddingLink && (
+            <tr className="bg-indigo-50">
+              <td className="p-3">{newLinkRow.employeeEmail}</td>
+
+              <td className="p-3">
+                <input
+                  value={newLinkRow.linkName}
+                  onChange={(e) =>
+                    setNewLinkRow({
+                      ...newLinkRow,
+                      linkName: e.target.value,
+                    })
+                  }
+                  className="border px-2 py-1 rounded w-full"
+                />
+              </td>
+
+              <td className="p-3">
+                <input
+                  value={newLinkRow.url}
+                  onChange={(e) =>
+                    setNewLinkRow({
+                      ...newLinkRow,
+                      url: e.target.value,
+                    })
+                  }
+                  className="border px-2 py-1 rounded w-full"
+                />
+              </td>
+
+              <td className="p-3 text-center">
+                <button
+                  onClick={() =>
+                    setNewLinkRow({
+                      ...newLinkRow,
+                      isActive: !newLinkRow.isActive,
+                    })
+                  }
+                >
+                  {newLinkRow.isActive ? (
+                    <FaToggleOn className="text-3xl text-indigo-500" />
+                  ) : (
+                    <FaToggleOff className="text-3xl text-gray-400" />
+                  )}
+                </button>
+              </td>
+
+              <td className="p-3 text-center">
+                <button
+                  onClick={handleSaveNewLink}
+                  className="bg-green-500 text-white px-3 py-1 rounded"
+                >
+                  Save
+                </button>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
+{/* ================= GLOBAL LINKS ================= */}
+<div className="max-w-5xl mx-auto mt-20">
+  <h2 className="text-xl font-semibold mb-4">Global Links</h2>
+
+  <div className="bg-white shadow rounded-lg">
+    <div className="flex justify-between items-center p-4 border-b">
+      <p className="font-medium">Links available to all employees</p>
+      <button
+        onClick={handleAddGlobalLinkClick}
+        className="bg-green-500 text-white px-4 py-2 rounded"
+      >
+        + Add Link
+      </button>
+    </div>
+
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b bg-gray-50">
+          <th className="p-3 text-left">Link Name</th>
+          <th className="p-3 text-left">URL</th>
+          <th className="p-3 text-center">Active</th>
+          <th className="p-3 text-center">Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {globalLinks.map((link) => (
+          <tr key={link._id} className="border-b">
+            <td className="p-3">
+              {editingGlobalLinkId === link._id ? (
+                <input
+                  defaultValue={link.linkName}
+                  onChange={(e) =>
+                    setEditGlobalLinkRow((p) => ({
+                      ...p,
+                      linkName: e.target.value,
+                    }))
+                  }
+                  className="border px-2 py-1 rounded w-full"
+                />
+              ) : (
+                link.linkName
+              )}
+            </td>
+
+            <td className="p-3">
+              {editingGlobalLinkId === link._id ? (
+                <input
+                  defaultValue={link.url}
+                  onChange={(e) =>
+                    setEditGlobalLinkRow((p) => ({
+                      ...p,
+                      url: e.target.value,
+                    }))
+                  }
+                  className="border px-2 py-1 rounded w-full"
+                />
+              ) : (
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  {link.url}
+                </a>
+              )}
+            </td>
+
+            <td className="p-3 text-center">
+              <button
+                onClick={() =>
+                  toggleGlobalLinkStatus(link._id, link.isActive)
+                }
+              >
+                {link.isActive ? (
+                  <FaToggleOn className="text-3xl text-indigo-500" />
+                ) : (
+                  <FaToggleOff className="text-3xl text-gray-400" />
+                )}
+              </button>
+            </td>
+
+            <td className="p-3 text-center">
+              {editingGlobalLinkId === link._id ? (
+                <button
+                  onClick={() => handleSaveEditGlobalLink(link._id)}
+                  className="bg-indigo-500 text-white px-3 py-1 rounded"
+                >
+                  Save
+                </button>
+              ) : (
+                <div className="flex justify-center gap-3">
+                  <button onClick={() => handleEditGlobalLink(link._id)}>
+                    <CiEdit className="text-xl text-indigo-600" />
+                  </button>
+                  <button onClick={() => deleteGlobalLink(link._id)}>
+                    <MdDelete className="text-xl text-red-500" />
+                  </button>
+                </div>
+              )}
+            </td>
+          </tr>
+        ))}
+
+        {isAddingGlobalLink && (
+          <tr className="bg-indigo-50">
+            <td className="p-3">
+              <input
+                value={newGlobalLinkRow.linkName}
+                onChange={(e) =>
+                  setNewGlobalLinkRow({
+                    ...newGlobalLinkRow,
+                    linkName: e.target.value,
+                  })
+                }
+                className="border px-2 py-1 rounded w-full"
+              />
+            </td>
+
+            <td className="p-3">
+              <input
+                value={newGlobalLinkRow.url}
+                onChange={(e) =>
+                  setNewGlobalLinkRow({
+                    ...newGlobalLinkRow,
+                    url: e.target.value,
+                  })
+                }
+                className="border px-2 py-1 rounded w-full"
+              />
+            </td>
+
+            <td className="p-3 text-center">
+              <button
+                onClick={() =>
+                  setNewGlobalLinkRow({
+                    ...newGlobalLinkRow,
+                    isActive: !newGlobalLinkRow.isActive,
+                  })
+                }
+              >
+                {newGlobalLinkRow.isActive ? (
+                  <FaToggleOn className="text-3xl text-indigo-500" />
+                ) : (
+                  <FaToggleOff className="text-3xl text-gray-400" />
+                )}
+              </button>
+            </td>
+
+            <td className="p-3 text-center">
+              <button
+                onClick={handleSaveNewGlobalLink}
+                className="bg-green-500 text-white px-3 py-1 rounded"
+              >
+                Save
               </button>
             </td>
           </tr>

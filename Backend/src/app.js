@@ -48,7 +48,21 @@ app.use(cookieParser());
 // ✅ SINGLE, CORRECT CORS CONFIG
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL, // exact frontend URL
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        process.env.FRONTEND_URL,        // https://arth-fin-ser-admin.vercel.app
+        process.env.ADMIN_FRONTEND_URL,  // https://admin.arthfinanceservices.com
+      ];
+
+      // allow requests with no origin (Postman, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
   })
